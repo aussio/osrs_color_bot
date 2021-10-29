@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from colors import GREEN, CYAN, DARK_CYAN, YELLOW, MAGENTA, get_mask
 from script_utils import get_screenshot, reset_xp_tracker
-from scripts import auto_craft
+from scripts import auto_craft, auto_cast_superglass, Fishing
 
 
 def get_rectangle(mask, color_name):
@@ -39,7 +39,8 @@ def run_for_duration(func, duration):
 
     while elapsed < DURATION:
         count += 1
-        print(f"Repetition: {count} Elapsed: {round(elapsed/60)}m")
+        if count % 10 == 0:
+            print(f"Repetition: {count} Elapsed: {round(elapsed/60)}m")
         func()
         elapsed = time.time() - start
 
@@ -60,24 +61,24 @@ if __name__ == "__main__":
 
     frame = get_screenshot()
 
-    green_mask = get_mask(frame, GREEN)
-    green_rect = get_rectangle(green_mask, color_name="green")
+    # green_mask = get_mask(frame, GREEN)
+    # green_rect = get_rectangle(green_mask, color_name="green")
     # debug_rectangle(frame, *green_rect)
 
-    cyan_mask = get_mask(frame, CYAN)
-    cyan_rect = get_rectangle(cyan_mask, color_name="cyan")
+    # cyan_mask = get_mask(frame, CYAN)
+    # cyan_rect = get_rectangle(cyan_mask, color_name="cyan")
     # debug_rectangle(frame, *cyan_rect)
 
     # dark_cyan_mask = get_mask(frame, DARK_CYAN)
     # dark_cyan_rect = get_rectangle(dark_cyan_mask, color_name="dark_cyan")
     # debug_rectangle(frame, *dark_cyan_mask)
 
-    yellow_mask = get_mask(frame, YELLOW)
-    yellow_rect = get_rectangle(yellow_mask, color_name="yellow")
+    # yellow_mask = get_mask(frame, YELLOW)
+    # yellow_rect = get_rectangle(yellow_mask, color_name="yellow")
     # debug_rectangle(frame, *yellow_rect)
 
-    magenta_mask = get_mask(frame, MAGENTA)
-    magenta_rect = get_rectangle(magenta_mask, color_name="magenta")
+    # magenta_mask = get_mask(frame, MAGENTA)
+    # magenta_rect = get_rectangle(magenta_mask, color_name="magenta")
     # debug_rectangle(frame, *magenta_rect)
 
     args = parse_args()
@@ -96,11 +97,24 @@ if __name__ == "__main__":
         auto_craft(
             bank_rect=green_rect,
             withdraw1_rect=cyan_rect,
-            # withdraw2_rect=dark_cyan_rect,
+            withdraw2_rect=dark_cyan_rect,
             item1_rect=yellow_rect,
             item2_rect=magenta_rect,
             wait_time=21,
             lag_factor=args.lag,
+        )
+
+    def superglass():
+        auto_cast_superglass(
+            bank_rect=green_rect,
+            withdraw1_rect=cyan_rect,
+            withdraw2_rect=dark_cyan_rect,
+            cast_spell_rect=yellow_rect,
+        )
+
+    def fishing():
+        Fishing.barbarian_fishing(
+            fishing_rect_color=CYAN,
         )
 
     if args.reset_xp:
