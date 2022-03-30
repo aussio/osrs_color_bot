@@ -11,7 +11,7 @@ from script_utils import (
     get_closest_rectangle_to_center,
     drop_all,
 )
-from settings import FISHING_DROP_ORDER, FISHING_STATUS
+from settings import CLEAN_CLICK_ORDER, FISHING_DROP_ORDER, FISHING_STATUS
 from script_random import random_point_near_center_of_rect, rsleep
 
 
@@ -71,6 +71,55 @@ def auto_cast_superglass(bank_rect, withdraw1_rect, withdraw2_rect, cast_spell_r
     rsleep(1.95, factor=0.05)
 
 
+def smith_platebodies_varrock(bank_booth_color, deposit_all, withdraw, anvil, platebody, start=0, lag_factor=1):
+    def bank():
+        closest_spot_rect = get_closest_rectangle_to_center(color=bank_booth_color)
+        x, y = random_point_near_center_of_rect(closest_spot_rect[0], closest_spot_rect[1])
+        # This delay is needed for some reason for the click to register
+        pyautogui.moveTo(x, y)
+        click(x, y)
+        # Deposit All
+        wait_for_bank()
+        x, y = random_point_near_center_of_rect(*deposit_all)
+        click(x, y)
+        rsleep(0.25 * lag_factor)
+        # Withdraw <saved>
+        click_in_rect(*withdraw)
+        rsleep(0.25 * lag_factor)
+
+    def click_anvil():
+        x, y = random_point_near_center_of_rect(*anvil)
+        # This delay is needed for some reason for the click to register
+        pyautogui.moveTo(x, y)
+        click(x, y)
+        rsleep(2.5)
+        wait_for_bank()
+        print("waiting for interface")
+
+    def make_platebody():
+        click_in_rect(*platebody)
+        # Make All
+        rsleep(15, 0.05)
+
+    funcs = [bank, click_anvil, make_platebody]
+    if start == 0:
+        funcs[0]()
+        funcs[1]()
+        funcs[2]()
+    elif start == 1:
+        funcs[1]()
+        funcs[2]()
+        funcs[0]()
+    elif start == 2:
+        funcs[2]()
+        funcs[0]()
+        funcs[1]()
+
+
+def clean_herbs():
+    drop_all(CLEAN_CLICK_ORDER, time_to_move=(0.10, 0.05))
+
+
 class Fishing:
     FISHING_STATE = None
 
@@ -106,3 +155,5 @@ class Fishing:
             click(x, y)
 
         rsleep(10)
+
+

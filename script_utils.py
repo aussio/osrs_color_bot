@@ -1,3 +1,4 @@
+from math import hypot, inf
 from os import closerange
 import time
 
@@ -31,6 +32,21 @@ def is_image_on_screen(image, threshold=0.80):
     return max_val > threshold
 
 
+def get_rectangle(mask, color_name):
+    contours, _ = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    if len(contours) > 1:
+        print(f"Warning! More than one rect for {color_name}")
+        return
+    try:
+        x, y, w, h = cv2.boundingRect(contours[0])
+    except IndexError as e:
+        print(f"Couldn't find {color_name}")
+        exit()
+    top_left = (x, y)
+    bottom_right = (x + w, y + h)
+    return (top_left, bottom_right)
+
+
 def get_closest_rectangle_to_center(color):
     """Gets the closest `color` rectangle to the center of the screen (settings.CENTER_OF_SCREEN_RELATIVE).
     This is because the player is almost always in the center."""
@@ -45,10 +61,13 @@ def get_closest_rectangle_to_center(color):
         rectangles.append((top_left, bottom_right))
 
     closest_rect = None
-    closest_distance = 9999
+    closest_distance = inf
     for rect in rectangles:
         center_x, center_y = random_point_near_center_of_rect(*rect)
-        distance = abs(center_x - CENTER_OF_SCREEN_RELATIVE[0])
+        distance = hypot(
+            center_x - CENTER_OF_SCREEN_RELATIVE[0],
+            center_y - CENTER_OF_SCREEN_RELATIVE[1],
+        )
         if DEBUG:
             print(f"{center_x},{center_y}: {distance}")
         if distance < closest_distance:
@@ -90,11 +109,11 @@ def reset_xp_tracker():
     click(840, 362)
 
 
-def drop_all(slots_to_click):
+def drop_all(slots_to_click, time_to_move=(0.12, 0.03)):
     """left click only at the moment"""
     for slot_index in slots_to_click:
         x, y = random_point_near_center_of_rect(*INVENTORY_SLOT_RECTS_ABSOLUTE[slot_index - 1], absolute=True)
         # time_to_move=(0.05, 0.01) is WAY too fast
         # The default of time_to_move=(0.15, 0.05) feels good for nearly all activities except dropping
         # your inventory quickly. A human doing it hundreds of times is a fair bit faster.
-        click(x, y, time_to_move=(0.12, 0.03))
+        click(x, y, time_to_move=time_to_move)
