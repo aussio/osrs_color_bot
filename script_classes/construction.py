@@ -106,4 +106,4 @@ class Construction:
 
         self.build_and_remove()
 
-        rsleep(2.5, factor=0.1)
+        rsleep(3.5, factor=0.1)

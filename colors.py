@@ -6,6 +6,7 @@ GREEN = numpy.array([100, 255, 0])
 CYAN = numpy.array([0, 255, 255])
 DARK_CYAN = numpy.array([0, 150, 255])
 YELLOW = numpy.array([255, 255, 100])
+ORANGE = numpy.array([255, 150, 0])
 MAGENTA = numpy.array([255, 0, 255])
 
 BANK_TEXT_COLOR = numpy.array([255, 152, 31])
