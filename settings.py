@@ -59,6 +59,12 @@ INVENTORY_SLOT_RECTS_ABSOLUTE = [
 # ]
 
 FISHING_DROP_ORDER = [4, 3, 7, 8, 12, 11, 15, 16, 20, 19, 23, 24, 28, 27, 26, 25, 21, 22, 18, 17, 13, 14, 10, 9, 5, 6]
+
+WOODCUTTING_DROP_ORDER = [4, 3, 7, 8, 12, 11, 15, 16, 20, 19, 23, 24, 28, 27, 26, 25, 21, 22, 18, 17, 13, 14, 10, 9, 5, 6, 2, 1]
+
 CLEAN_CLICK_ORDER = [4, 3, 7, 8, 12, 11, 15, 16, 20, 19, 23, 24, 28, 27, 26, 25, 21, 22, 18, 17, 13, 14, 10, 9, 5, 6, 2, 1]
 
 DEBUG = False
+
+# Special attack recharges every 5 minutes.
+SPECIAL_ATTACK_RECHARGE_SECONDS = 300

@@ -116,8 +116,20 @@ def smith_platebodies_varrock(bank_booth_color, deposit_all, withdraw, anvil, pl
         funcs[1]()
 
 
-def clean_herbs():
-    drop_all(CLEAN_CLICK_ORDER, time_to_move=(0.10, 0.05))
+def clean_herbs(bank_rect, withdraw1_rect):
+    x, y = random_point_near_center_of_rect(*bank_rect)
+    wait_for_bank(click_coor=(x, y))
+    rsleep(0.25, factor=0.05)
+    # Deposit All
+    wait_for_deposit_all(click_coor=(x, y))
+    rsleep(0.25)
+    # Withdraw <saved>
+    click_in_rect(*withdraw1_rect)
+    rsleep(0.25)
+    # Esc bank
+    press_key("esc")
+    rsleep(0.25)
+    drop_all(CLEAN_CLICK_ORDER, time_to_move=(0.11, 0.01))
 
 
 class Fishing:
@@ -145,7 +157,7 @@ class Fishing:
             if is_image_on_screen(FISHING_INV_FULL):
                 cls.update_state("Inventory full")
                 drop_all(FISHING_DROP_ORDER)
-                rsleep(1)
+                rsleep(0.5)
 
             closest_spot_rect = get_closest_rectangle_to_center(color=fishing_rect_color)
             x, y = random_point_near_center_of_rect(closest_spot_rect[0], closest_spot_rect[1])
@@ -155,5 +167,3 @@ class Fishing:
             click(x, y)
 
         rsleep(10)
-
-

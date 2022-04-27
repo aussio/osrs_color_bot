@@ -7,9 +7,10 @@ from datetime import datetime, timedelta
 from colors import GREEN, CYAN, DARK_CYAN, ORANGE, YELLOW, MAGENTA, get_mask
 from script_classes.construction import Construction
 from script_classes.mining import Mining
+from script_classes.woodcutting import Woodcutting
 from script_random import random_around, rsleep
 from script_utils import get_rectangle, get_screenshot, reset_xp_tracker
-from scripts import auto_craft, auto_cast_superglass, Fishing, smith_platebodies_varrock
+from scripts import auto_craft, Fishing, clean_herbs, smith_platebodies_varrock
 
 
 def debug_rectangle(image, top_left, bottom_right):
@@ -41,7 +42,9 @@ def run_for_duration(func, duration, num_runs, sleep_after_count):
         count += 1
         if count % 10 == 0:
             print(f"Repetition: {count} Elapsed: {round(elapsed/60)}m")
+
         func()
+
         elapsed = time.time() - start
         if sleep_after_count and count % sleep_after_count_random == 0:
             print(f"sleep_after_count: {sleep_after_count_random} for {sleep_after_count[1]} seconds'ish")
@@ -149,6 +152,10 @@ if __name__ == "__main__":
             fishing_rect_color=MAGENTA,
         )
 
+    def woodcutting(elapsed):
+        w = Woodcutting(tree_rect_color=GREEN, special_attack_color=MAGENTA, seconds_elapsed=elapsed)
+        w.blisterwood()
+
     MINING_SLEEP_AFTER_COUNT = (30, 5)
 
     def mining():
@@ -173,8 +180,11 @@ if __name__ == "__main__":
         )
         c.oak_larders()
 
-    # def clean():
-    #     clean_herbs()
+    def clean():
+        clean_herbs(
+            bank_rect=get_color_rect(GREEN),
+            withdraw1_rect=get_color_rect(CYAN),
+        )
 
     # Set sleep_after_count
     if args.script == "mining":
