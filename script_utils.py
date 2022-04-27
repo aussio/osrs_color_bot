@@ -47,7 +47,7 @@ def get_rectangle(mask, color_name):
     return (top_left, bottom_right)
 
 
-def get_closest_rectangle_to_center(color):
+def get_closest_rectangle_to_center(color, image=None):
     """Gets the closest `color` rectangle to the center of the screen (settings.CENTER_OF_SCREEN_RELATIVE).
     This is because the player is almost always in the center."""
     frame = get_screenshot()
@@ -64,6 +64,7 @@ def get_closest_rectangle_to_center(color):
     closest_distance = inf
     for rect in rectangles:
         center_x, center_y = random_point_near_center_of_rect(*rect)
+        debug_rectangle(image, rect[0], rect[1])
         distance = hypot(
             center_x - CENTER_OF_SCREEN_RELATIVE[0],
             center_y - CENTER_OF_SCREEN_RELATIVE[1],
@@ -117,3 +118,13 @@ def drop_all(slots_to_click, time_to_move=(0.12, 0.03)):
         # The default of time_to_move=(0.15, 0.05) feels good for nearly all activities except dropping
         # your inventory quickly. A human doing it hundreds of times is a fair bit faster.
         click(x, y, time_to_move=time_to_move)
+
+
+def debug_rectangle(image, top_left, bottom_right):
+    cv2.rectangle(
+        image,
+        top_left,
+        bottom_right,
+        [0, 0, 255],
+        2,
+    )

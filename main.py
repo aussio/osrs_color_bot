@@ -8,19 +8,10 @@ from colors import GREEN, CYAN, DARK_CYAN, ORANGE, YELLOW, MAGENTA, get_mask
 from script_classes.construction import Construction
 from script_classes.mining import Mining
 from script_classes.woodcutting import Woodcutting
+from script_classes.zach_woodcut import ZachWoodcutting
 from script_random import random_around, rsleep
-from script_utils import get_rectangle, get_screenshot, reset_xp_tracker
+from script_utils import get_closest_rectangle_to_center, get_rectangle, get_screenshot, reset_xp_tracker
 from scripts import auto_craft, Fishing, clean_herbs, smith_platebodies_varrock
-
-
-def debug_rectangle(image, top_left, bottom_right):
-    cv2.rectangle(
-        image,
-        top_left,
-        bottom_right,
-        [0, 0, 255],
-        2,
-    )
 
 
 def run_for_duration(func, duration, num_runs, sleep_after_count):
@@ -75,8 +66,10 @@ def parse_args():
 def get_color_rect(color, debug=False):
     mask = get_mask(frame, color)
     rect = get_rectangle(mask, color_name=color)
+    if rect is None:
+        print("No rect of color: {}".format(color))
     if debug:
-        debug_rectangle(frame, *rect)
+        debug_rectangle(frame, rect[0], rect[1])
     return rect
 
 
@@ -85,6 +78,16 @@ if __name__ == "__main__":
     frame = get_screenshot()
 
     args = parse_args()
+
+    def debug():
+        frame = get_screenshot()
+        _ = get_closest_rectangle_to_center(YELLOW, frame)
+        cv2.imshow("Screenshot", frame)
+        cv2.waitKey(delay=200)
+
+    def woodcut():
+        w = ZachWoodcutting(tree_highlight_color=YELLOW)
+        w.chop()
 
     def dhide():
         auto_craft(
