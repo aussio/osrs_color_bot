@@ -3,7 +3,8 @@ This would make the most sense to be user settings in a GUI or similar.
 For now, this is essentially just a "constants" file.
 """
 
-MONITOR = {"top": 300, "left": 0, "width": 770, "height": 500}
+MONITOR = {"top": 284, "left": 0, "width": 770, "height": 500}
+BOTTOM_LEFT_WINDOW = {"top": 540, "left": 0, "width": 770, "height": 505}
 FISHING_STATUS = {"top": 300, "left": 0, "width": 140, "height": 80}
 # This is intended to be where the player currently is, since they are usually
 # always at the center of the screen. (x, y)
@@ -60,9 +61,67 @@ INVENTORY_SLOT_RECTS_ABSOLUTE = [
 
 FISHING_DROP_ORDER = [4, 3, 7, 8, 12, 11, 15, 16, 20, 19, 23, 24, 28, 27, 26, 25, 21, 22, 18, 17, 13, 14, 10, 9, 5, 6]
 
-WOODCUTTING_DROP_ORDER = [4, 3, 7, 8, 12, 11, 15, 16, 20, 19, 23, 24, 28, 27, 26, 25, 21, 22, 18, 17, 13, 14, 10, 9, 5, 6, 2, 1]
+WOODCUTTING_DROP_ORDER = [
+    4,
+    3,
+    7,
+    8,
+    12,
+    11,
+    15,
+    16,
+    20,
+    19,
+    23,
+    24,
+    28,
+    27,
+    26,
+    25,
+    21,
+    22,
+    18,
+    17,
+    13,
+    14,
+    10,
+    9,
+    5,
+    6,
+    2,
+    1,
+]
 
-CLEAN_CLICK_ORDER = [4, 3, 7, 8, 12, 11, 15, 16, 20, 19, 23, 24, 28, 27, 26, 25, 21, 22, 18, 17, 13, 14, 10, 9, 5, 6, 2, 1]
+CLEAN_CLICK_ORDER = [
+    4,
+    3,
+    7,
+    8,
+    12,
+    11,
+    15,
+    16,
+    20,
+    19,
+    23,
+    24,
+    28,
+    27,
+    26,
+    25,
+    21,
+    22,
+    18,
+    17,
+    13,
+    14,
+    10,
+    9,
+    5,
+    6,
+    2,
+    1,
+]
 
 DEBUG = False
 

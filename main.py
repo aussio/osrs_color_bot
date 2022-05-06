@@ -1,7 +1,5 @@
 import argparse
-from math import inf
 import time
-import cv2
 from datetime import datetime, timedelta
 
 from colors import GREEN, CYAN, DARK_CYAN, ORANGE, YELLOW, MAGENTA, get_mask
@@ -10,8 +8,19 @@ from script_classes.mining import Mining
 from script_classes.woodcutting import Woodcutting
 from script_classes.zach_woodcut import ZachWoodcutting
 from script_random import random_around, rsleep
-from script_utils import get_closest_rectangle_to_center, get_rectangle, get_screenshot, reset_xp_tracker
+from script_utils import (
+    debug_points_on_screen,
+    debug_rectangle,
+    display_debug_screenshot,
+    get_inventory_corner_points,
+    get_inventory_slots,
+    get_rectangle,
+    get_screenshot,
+    get_screenshot_bgr,
+    reset_xp_tracker,
+)
 from scripts import auto_craft, Fishing, clean_herbs, smith_platebodies_varrock
+from settings import BOTTOM_LEFT_WINDOW
 
 
 def run_for_duration(func, duration, num_runs, sleep_after_count):
@@ -80,10 +89,11 @@ if __name__ == "__main__":
     args = parse_args()
 
     def debug():
-        frame = get_screenshot()
-        _ = get_closest_rectangle_to_center(YELLOW, frame)
-        cv2.imshow("Screenshot", frame)
-        cv2.waitKey(delay=200)
+        # Take screenshot
+        frame = get_screenshot(BOTTOM_LEFT_WINDOW)
+        inventory_slot_points = get_inventory_slots(BOTTOM_LEFT_WINDOW)
+        debug_points_on_screen(frame, inventory_slot_points)
+        display_debug_screenshot(frame, BOTTOM_LEFT_WINDOW)
 
     def woodcut():
         w = ZachWoodcutting(tree_highlight_color=YELLOW)
@@ -155,8 +165,8 @@ if __name__ == "__main__":
             fishing_rect_color=MAGENTA,
         )
 
-    def woodcutting(elapsed):
-        w = Woodcutting(tree_rect_color=GREEN, special_attack_color=MAGENTA, seconds_elapsed=elapsed)
+    def woodcutting():
+        w = Woodcutting(tree_rect_color=GREEN, special_attack_color=MAGENTA)
         w.blisterwood()
 
     MINING_SLEEP_AFTER_COUNT = (30, 5)

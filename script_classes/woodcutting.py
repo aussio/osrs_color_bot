@@ -12,10 +12,9 @@ BLISTERWOOD_INV_FULL = cv2.imread("pics/inv_full_of_blisterwood_logs.png", cv2.I
 
 
 class Woodcutting:
-    def __init__(self, tree_rect_color, special_attack_color, seconds_elapsed):
+    def __init__(self, tree_rect_color, special_attack_color):
         self.tree_rect_color = tree_rect_color
         self.special_attack_color = special_attack_color
-        self.seconds_elapsed = seconds_elapsed
         self.already_specialed = set()
         self.state = None
 
