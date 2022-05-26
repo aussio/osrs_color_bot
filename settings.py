@@ -3,6 +3,9 @@ This would make the most sense to be user settings in a GUI or similar.
 For now, this is essentially just a "constants" file.
 """
 
+from colors import SOLID_GREEN
+
+
 MONITOR = {"top": 284, "left": 0, "width": 770, "height": 500}
 BOTTOM_LEFT_WINDOW = {"top": 540, "left": 0, "width": 770, "height": 505}
 FISHING_STATUS = {"top": 300, "left": 0, "width": 140, "height": 80}
@@ -127,3 +130,16 @@ DEBUG = False
 
 # Special attack recharges every 5 minutes.
 SPECIAL_ATTACK_RECHARGE_SECONDS = 300
+
+# HP and Prayer colors
+# It looks like they go from solid green to solid yellow to solid red
+# with a completely smooth transition between them.
+# Some RGB square roots for distance seem conventional: https://en.wikipedia.org/wiki/Color_difference#Euclidean
+# Then from there, do a mask on that light brown (background) and black (shadow)
+# to be left with only the color. Do a distance, and you'll know roughly where you're at.
+max = 255
+FULL = [0, max, 0]  # SOLID GREEN
+THREE_QUARTER = [max / 2, max, 0]
+HALF = [max, max, 0]  # SOLID YELLOW
+ONE_QUARTER = [max, max / 2, 0]
+EMPTY = [max, 0, 0]  # SOLID RED

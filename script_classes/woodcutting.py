@@ -9,6 +9,7 @@ from settings import FISHING_STATUS, SPECIAL_ATTACK_RECHARGE_SECONDS, WOODCUTTIN
 
 
 BLISTERWOOD_INV_FULL = cv2.imread("pics/inv_full_of_blisterwood_logs.png", cv2.IMREAD_COLOR)
+BLISTERWOOD_INV_FULL_SMALL = cv2.imread("pics/inv_full_blisterwood_logs_small.png", cv2.IMREAD_COLOR)
 
 
 class Woodcutting:
@@ -53,11 +54,13 @@ class Woodcutting:
     def blisterwood(self):
 
         if self.is_chopping():
-            self.update_state("Woodcutting")
+            # too spammy :P
+            # self.update_state("Woodcutting")
+            pass
         else:
             self.update_state("Idle")
 
-            if is_image_on_screen(BLISTERWOOD_INV_FULL, threshold=0.85):
+            if is_image_on_screen(BLISTERWOOD_INV_FULL_SMALL, threshold=0.95):
                 self.update_state("Inventory full")
                 drop_all(WOODCUTTING_DROP_ORDER)
 

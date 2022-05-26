@@ -1,16 +1,14 @@
 from math import hypot, inf
 import math
-from os import closerange
-from ssl import ALERT_DESCRIPTION_ILLEGAL_PARAMETER
 import time
 
 import cv2
 import numpy
 import mss
 
-from colors import BANK_TEXT_COLOR, SOLID_GREEN, get_mask
+from colors import BANK_TEXT_COLOR, get_mask
 from auto_gui import click
-from settings import MONITOR, FISHING_STATUS, INVENTORY_SLOT_RECTS_ABSOLUTE, CENTER_OF_SCREEN_RELATIVE, DEBUG
+from settings import MONITOR, INVENTORY_SLOT_RECTS_ABSOLUTE, CENTER_OF_SCREEN_RELATIVE, DEBUG
 from script_random import rsleep, random_point_near_center_of_rect
 
 
@@ -205,28 +203,48 @@ def display_debug_screenshot(screenshot, monitor=MONITOR, refresh_rate_ms=1000):
 
 def get_inventory_corner_points(screenshot):
     # Top Left of Inventory
-    top_left_im = cv2.imread("pics/inventory_top_left.png", cv2.IMREAD_COLOR)
-    top_left_invent_point, _ = get_image_on_screen(screenshot, top_left_im)
+    try:
+        top_left_im = cv2.imread("pics/inventory_top_left.png", cv2.IMREAD_COLOR)
+        top_left_invent_point, _ = get_image_on_screen(screenshot, top_left_im)
+    except Exception as e:
+        print("Couldn't find top_left corner", e)
+        top_left_invent_point = None
     # Top Right of Inventory
-    top_right_im = cv2.imread("pics/inventory_top_right.png", cv2.IMREAD_COLOR)
-    w, _ = top_right_im.shape[:2]
-    top_left, _ = get_image_on_screen(screenshot, top_right_im)
-    top_right_invent_point = (top_left[0] + w, top_left[1])
+    try:
+        top_right_im = cv2.imread("pics/inventory_top_right.png", cv2.IMREAD_COLOR)
+        w, _ = top_right_im.shape[:2]
+        top_left, _ = get_image_on_screen(screenshot, top_right_im)
+        top_right_invent_point = (top_left[0] + w, top_left[1])
+    except Exception as e:
+        print("Couldn't find top_right corner", e)
+        top_right_invent_point = None
     # Bottom Left of Inventory
-    bottom_left_im = cv2.imread("pics/inventory_bottom_left.png", cv2.IMREAD_COLOR)
-    _, h = bottom_left_im.shape[:2]
-    top_left, _ = get_image_on_screen(screenshot, bottom_left_im)
-    bottom_left_invent_point = (top_left[0], top_left[1] + h)
+    try:
+        bottom_left_im = cv2.imread("pics/inventory_bottom_left.png", cv2.IMREAD_COLOR)
+        _, h = bottom_left_im.shape[:2]
+        top_left, _ = get_image_on_screen(screenshot, bottom_left_im)
+        bottom_left_invent_point = (top_left[0], top_left[1] + h)
+    except Exception as e:
+        print("Couldn't find bottom_left corner", e)
+        bottom_left_invent_point = None
     # Bottom Right of Inventory
-    bottom_right_im = cv2.imread("pics/inventory_bottom_right.png", cv2.IMREAD_COLOR)
-    _, bottom_right_invent_point = get_image_on_screen(screenshot, bottom_right_im)
-
+    try:
+        bottom_right_im = cv2.imread("pics/inventory_bottom_right.png", cv2.IMREAD_COLOR)
+        _, bottom_right_invent_point = get_image_on_screen(screenshot, bottom_right_im)
+    except Exception as e:
+        print("Couldn't find bottom_right corner", e)
+        bottom_right_invent_point = None
     return top_left_invent_point, top_right_invent_point, bottom_left_invent_point, bottom_right_invent_point
+
 
 def get_inventory_slots(monitor):
     screenshot = get_screenshot_bgr(monitor)
     tl, tr, bl, br = get_inventory_corner_points(screenshot)
-    return calculate_inventory_slots(tl, tr, bl, br)
+    if all([tl, tr, bl, br]):
+        return calculate_inventory_slots(tl, tr, bl, br)
+    else:
+        return None
+
 
 def calculate_inventory_slots(top_left, top_right, bottom_left, bottom_right):
     """
@@ -268,3 +286,22 @@ def calculate_inventory_slots(top_left, top_right, bottom_left, bottom_right):
             inventory_points.append((x, y))
 
     return inventory_points
+
+
+def get_osrs_windows():
+    from Quartz import (
+        CGWindowListCopyWindowInfo,
+        kCGWindowListOptionOnScreenOnly,
+        kCGNullWindowID,
+    )
+
+    options = kCGWindowListOptionOnScreenOnly
+    windowList = CGWindowListCopyWindowInfo(options, kCGNullWindowID)
+
+    osrs_windows = []
+    for window in windowList:
+        title = window.get("kCGWindowOwnerName")
+        if str(title.lower()) == "runelite":
+            osrs_windows.append(window.get("kCGWindowBounds"))
+
+    return osrs_windows

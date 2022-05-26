@@ -2,6 +2,10 @@ import argparse
 import time
 from datetime import datetime, timedelta
 
+import cv2
+import pytesseract
+from auto_gui import slow_click
+
 from colors import GREEN, CYAN, DARK_CYAN, ORANGE, YELLOW, MAGENTA, get_mask
 from script_classes.construction import Construction
 from script_classes.mining import Mining
@@ -12,11 +16,10 @@ from script_utils import (
     debug_points_on_screen,
     debug_rectangle,
     display_debug_screenshot,
-    get_inventory_corner_points,
+    get_image_on_screen,
     get_inventory_slots,
     get_rectangle,
     get_screenshot,
-    get_screenshot_bgr,
     reset_xp_tracker,
 )
 from scripts import auto_craft, Fishing, clean_herbs, smith_platebodies_varrock
@@ -88,12 +91,79 @@ if __name__ == "__main__":
 
     args = parse_args()
 
+    def autoclick():
+        # WARNING: CAREFUL USING THIS! EASILY BANNABLE
+        # Got the hard-coded coordinates from the Mac screenshot util
+        x = 565
+        y = 495
+        slow_click(random_around(x, 0.005), random_around(y, 0.005))
+        rsleep(60)
+
     def debug():
         # Take screenshot
         frame = get_screenshot(BOTTOM_LEFT_WINDOW)
         inventory_slot_points = get_inventory_slots(BOTTOM_LEFT_WINDOW)
-        debug_points_on_screen(frame, inventory_slot_points)
-        display_debug_screenshot(frame, BOTTOM_LEFT_WINDOW)
+        if inventory_slot_points:
+            debug_points_on_screen(frame, inventory_slot_points)
+        display_debug_screenshot(frame, BOTTOM_LEFT_WINDOW, refresh_rate_ms=200)
+
+    def debug_status_bar_simple():
+        # get image in grayscale
+        for hp_img in [
+            # cv2.imread("pics/hp_status_bar.png", cv2.IMREAD_GRAYSCALE),
+            # cv2.imread("pics/hp_status_bar_hard.png", cv2.IMREAD_GRAYSCALE),
+            cv2.imread("pics/prayer_status_bar.png", cv2.IMREAD_GRAYSCALE),
+        ]:
+            # Get only the pure white values
+            bw_text_only = cv2.threshold(hp_img, 250, 255, cv2.THRESH_BINARY)[1]
+            # Invert to be white background with black text
+            bw_text_only = cv2.bitwise_not(bw_text_only)
+            cv2.imshow("HP", bw_text_only)
+
+            seven = cv2.imread("pics/7.png", cv2.IMREAD_GRAYSCALE)
+            bw_text_only_num_1 = cv2.threshold(seven, 250, 255, cv2.THRESH_BINARY)[1]
+            # Invert to be white background with black text
+            bw_text_only_num_1 = cv2.bitwise_not(bw_text_only_num_1)
+            # cv2.imshow("HP", seven)
+
+            tl, br = get_image_on_screen(bw_text_only, seven, threshold=0.5)
+            print(tl, br)
+
+            cv2.waitKey(delay=2000)
+            cv2.destroyAllWindows()
+
+    def debug_status_bar():
+        # get image in grayscale
+        for hp_img in [
+            cv2.imread("pics/hp_status_bar.png", cv2.IMREAD_GRAYSCALE),
+            cv2.imread("pics/hp_status_bar_hard.png", cv2.IMREAD_GRAYSCALE),
+            cv2.imread("pics/prayer_status_bar.png", cv2.IMREAD_GRAYSCALE),
+        ]:
+            # Get only the pure white values
+            bw_text_only = cv2.threshold(hp_img, 250, 255, cv2.THRESH_BINARY)[1]
+            # Invert to be white background with black text
+            bw_text_only = cv2.bitwise_not(bw_text_only)
+            # Zoom in to make text thicker
+            zoom_img = cv2.resize(bw_text_only, None, fx=5, fy=5)
+
+            # Blur the image to *really* make the text thicker
+            blur_img = zoom_img
+
+            blur_img = cv2.medianBlur(blur_img, ksize=11)
+            # blur_img = cv2.boxFilter(blur_img, -1, (7, 7))
+            # blur_img = cv2.blur(blur_img, (7, 7))
+            # blur_img = cv2.GaussianBlur(blur_img, (zoom, zoom), 0)
+            # Clean up zoomed image to be pure black-white for tesseract instead of blurry grey
+            blurred_bw_img = cv2.threshold(blur_img, 150, 255, cv2.THRESH_BINARY)[1]
+
+            cv2.imshow("HP", blurred_bw_img)
+            print(
+                pytesseract.image_to_string(blurred_bw_img, config="--psm 6 -c tessedit_char_whitelist=0123456789"),
+                end="",
+            )
+
+            cv2.waitKey(delay=1000)
+            cv2.destroyAllWindows()
 
     def woodcut():
         w = ZachWoodcutting(tree_highlight_color=YELLOW)
