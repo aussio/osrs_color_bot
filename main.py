@@ -94,10 +94,10 @@ if __name__ == "__main__":
     def autoclick():
         # WARNING: CAREFUL USING THIS! EASILY BANNABLE
         # Got the hard-coded coordinates from the Mac screenshot util
-        x = 565
-        y = 495
+        x = 575
+        y = 475
         slow_click(random_around(x, 0.005), random_around(y, 0.005))
-        rsleep(60)
+        rsleep(25)
 
     def debug():
         # Take screenshot
@@ -140,11 +140,11 @@ if __name__ == "__main__":
             cv2.imread("pics/prayer_status_bar.png", cv2.IMREAD_GRAYSCALE),
         ]:
             # Get only the pure white values
-            bw_text_only = cv2.threshold(hp_img, 250, 255, cv2.THRESH_BINARY)[1]
+            white_text_only = cv2.threshold(hp_img, 250, 255, cv2.THRESH_BINARY)[1]
             # Invert to be white background with black text
-            bw_text_only = cv2.bitwise_not(bw_text_only)
+            black_text_only = cv2.bitwise_not(white_text_only)
             # Zoom in to make text thicker
-            zoom_img = cv2.resize(bw_text_only, None, fx=5, fy=5)
+            zoom_img = cv2.resize(black_text_only, None, fx=5, fy=5)
 
             # Blur the image to *really* make the text thicker
             blur_img = zoom_img
