@@ -7,10 +7,10 @@ import pytesseract
 from auto_gui import slow_click
 
 from colors import GREEN, CYAN, DARK_CYAN, ORANGE, YELLOW, MAGENTA, get_mask
-from script_classes.construction import Construction
-from script_classes.mining import Mining
-from script_classes.woodcutting import Woodcutting
-from script_classes.zach_woodcut import ZachWoodcutting
+from script_classes.old_style.construction import Construction
+from script_classes.old_style.mining import Mining
+from script_classes.old_style.woodcutting import Woodcutting
+from script_classes.old_style.zach_woodcut import ZachWoodcutting
 from script_random import random_around, rsleep
 from script_utils import (
     debug_points_on_screen,
@@ -24,6 +24,10 @@ from script_utils import (
 )
 from scripts import auto_craft, Fishing, clean_herbs, smith_platebodies_varrock
 from settings import BOTTOM_LEFT_WINDOW
+
+
+DEFAULT_NUM_RUNS = 999999
+DEFAULT_SLEEP = 30
 
 
 def run_for_duration(func, duration, num_runs, sleep_after_count):
@@ -64,13 +68,18 @@ def parse_args():
     parser.add_argument("--script", "-s", type=str, required=True, help="The script function to run.")
     parser.add_argument("--duration", "-d", type=int, default=30, help="The duration to run `script` in minutes.")
     parser.add_argument(
-        "--num-runs", "-n", type=int, default=999999, help="The number of iterations the script should run."
+        "--num-runs", "-n", type=int, default=DEFAULT_NUM_RUNS, help="The number of iterations the script should run."
     )
     parser.add_argument("--lag", type=float, default=1, help="Lag factor. Multiplies select sleep times.")
     parser.add_argument(
         "--reset-xp", "-r", action="store_true", default=False, help="If passed, reset the Runelite xp tracker."
     )
     parser.add_argument("--start", type=int, default=0, help="If passed, what stage in the script to start.")
+    # Used by autoclicker
+    parser.add_argument(
+        "--sleep", type=int, default=DEFAULT_SLEEP, help="How long the script should sleep between iterations."
+    )
+    parser.add_argument("--clicks", type=int, default=1, help="")
 
     return parser.parse_args()
 
@@ -88,16 +97,26 @@ def get_color_rect(color, debug=False):
 if __name__ == "__main__":
 
     frame = get_screenshot()
-
     args = parse_args()
 
     def autoclick():
         # WARNING: CAREFUL USING THIS! EASILY BANNABLE
         # Got the hard-coded coordinates from the Mac screenshot util
-        x = 575
-        y = 475
-        slow_click(random_around(x, 0.005), random_around(y, 0.005))
-        rsleep(25)
+        x = 602
+        y = 730
+
+        sleep_time = args.sleep
+        click_times = round(random_around(args.clicks, 0.33))
+
+        print(f"Clicking {click_times} times per {sleep_time} seconds.")
+
+        x = random_around(x, 0.005)
+        y = random_around(y, 0.005)
+        for _ in range(click_times):
+            slow_click(x, y)
+            rsleep(0.1)
+
+        rsleep(sleep_time, 0.1)
 
     def debug():
         # Take screenshot
