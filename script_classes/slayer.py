@@ -13,4 +13,4 @@ class Slayer(ScriptBase):
         print(f"Loop count: {self.loop_count}")
 
     def on_sleep(self):
-        rsleep(5)
+        rsleep(1)
