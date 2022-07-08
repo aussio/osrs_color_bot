@@ -187,18 +187,21 @@ def get_image_on_screen(screenshot, image, threshold=0.85):
     return top_left, bottom_right
 
 
-def display_debug_screenshot(screenshot, monitor=MONITOR, refresh_rate_ms=1000):
+def display_debug_screenshot(screenshot, top, left, refresh_rate_ms=1000):
     """
     params:
-        monitor: Where on the screen to screenshot
         refresh_rate_ms: milliseconds to wait between refresh
     """
-    # This will resize the screenshot to the size of the thing you actually screenshot.
-    # That way when you display (imshow) it, it's the same size as the thing you screenshot.
-    # Otherwise it's fullscreen.
-    resized = cv2.resize(screenshot, (monitor["width"], monitor["height"]))
-    cv2.imshow("Game Preview", resized)
-    cv2.waitKey(delay=refresh_rate_ms)
+    # Unsure why this is sometimes not needed. :shrug:
+    # resized = cv2.resize(screenshot, (monitor["width"], monitor["height"]))
+    name = "Debug"
+    cv2.namedWindow(name)
+    # Move to x, y
+    cv2.moveWindow(name, left, top)
+    cv2.imshow(name, screenshot)
+    # Show on top of other windows.
+    cv2.setWindowProperty(name, cv2.WND_PROP_TOPMOST, 1)
+    cv2.waitKey(delay=int(refresh_rate_ms))
 
 
 def get_inventory_corner_points(screenshot):

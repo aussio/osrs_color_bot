@@ -13,11 +13,8 @@ from script_classes.old_style.woodcutting import Woodcutting
 from script_classes.old_style.zach_woodcut import ZachWoodcutting
 from script_random import random_around, rsleep
 from script_utils import (
-    debug_points_on_screen,
     debug_rectangle,
-    display_debug_screenshot,
     get_image_on_screen,
-    get_inventory_slots,
     get_rectangle,
     get_screenshot,
     reset_xp_tracker,
@@ -119,13 +116,14 @@ if __name__ == "__main__":
 
         rsleep(sleep_time, 0.1)
 
-    def debug():
-        # Take screenshot
-        frame = get_screenshot(BOTTOM_LEFT_WINDOW)
-        inventory_slot_points = get_inventory_slots(BOTTOM_LEFT_WINDOW)
-        if inventory_slot_points:
-            debug_points_on_screen(frame, inventory_slot_points)
-        display_debug_screenshot(frame, BOTTOM_LEFT_WINDOW, refresh_rate_ms=200)
+    # def debug():
+    #     # Take screenshot
+    #     frame = get_screenshot(BOTTOM_LEFT_WINDOW)
+    #     inventory_slot_points = get_inventory_slots(BOTTOM_LEFT_WINDOW)
+    #     if inventory_slot_points:
+    #         debug_points_on_screen(frame, inventory_slot_points)
+    # I broke this for use in new scripts:
+    # display_debug_screenshot(frame, BOTTOM_LEFT_WINDOW, refresh_rate_ms=200)
 
     def debug_status_bar_simple():
         # get image in grayscale

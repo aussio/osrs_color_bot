@@ -35,16 +35,16 @@ class ScriptBase:
         else:
             raise Exception("Must specify either -d duration or -n num_runs.")
 
-        elapsed = 0
+        self.on_start()
 
         try:
+            elapsed = 0
             while elapsed < self.duration and self.loop_count < self.num_runs:
                 elapsed = time.time() - start
                 self.loop_count += 1
                 if self.loop_count % 10 == 0:
                     print(f"Repetition: {self.loop_count} Elapsed: {round(elapsed/60)}m")
 
-                self.on_start()
                 self.on_loop()
                 self.on_sleep()
         # ctrl+c and such
