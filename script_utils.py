@@ -92,8 +92,8 @@ def wait_for_bank(click_coor=None):
             time.sleep(0.1)  # Benkmarked at .033 without
 
 
-def wait_for_deposit_all(click_coor):
-    empty_inventory_pic = cv2.imread("pics/empty_inventory.png", cv2.IMREAD_COLOR)
+def wait_for_deposit_all(click_coor, img_filename="empty_inventory.png"):
+    empty_inventory_pic = cv2.imread(f"pics/{img_filename}", cv2.IMREAD_COLOR)
     start = time.time()
     empty_inventory = False
     click(*click_coor)

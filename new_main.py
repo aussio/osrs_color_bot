@@ -15,6 +15,7 @@ def parse_args():
 if __name__ == "__main__":
 
     from script_classes.nmz import NMZ
+    from script_classes.slayer import Slayer
 
     args = parse_args()
 

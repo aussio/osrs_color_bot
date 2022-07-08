@@ -22,7 +22,7 @@ from script_utils import (
     get_screenshot,
     reset_xp_tracker,
 )
-from scripts import auto_craft, Fishing, clean_herbs, smith_platebodies_varrock
+from scripts import auto_craft, Fishing, clean_herbs, smith_platebodies_varrock, auto_cast_plankmake
 from settings import BOTTOM_LEFT_WINDOW
 
 
@@ -102,11 +102,12 @@ if __name__ == "__main__":
     def autoclick():
         # WARNING: CAREFUL USING THIS! EASILY BANNABLE
         # Got the hard-coded coordinates from the Mac screenshot util
-        x = 602
-        y = 730
+        x = 572
+        y = 538
 
         sleep_time = args.sleep
-        click_times = round(random_around(args.clicks, 0.33))
+        # click_times = round(random_around(args.clicks, 0.33))
+        click_times = 1
 
         print(f"Clicking {click_times} times per {sleep_time} seconds.")
 
@@ -238,6 +239,13 @@ if __name__ == "__main__":
     #         withdraw2_rect=dark_cyan_rect,
     #         cast_spell_rect=yellow_rect,
     #     )
+
+    def plankmake():
+        auto_cast_plankmake(
+            bank_rect=get_color_rect(GREEN),
+            withdraw1_rect=get_color_rect(DARK_CYAN),
+            cast_spell_rect=get_color_rect(MAGENTA),
+        )
 
     def platebody():
         smith_platebodies_varrock(

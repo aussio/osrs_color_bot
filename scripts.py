@@ -12,7 +12,7 @@ from script_utils import (
     drop_all,
 )
 from settings import CLEAN_CLICK_ORDER, FISHING_DROP_ORDER, FISHING_STATUS
-from script_random import random_point_near_center_of_rect, rsleep
+from script_random import random_around, random_point_near_center_of_rect, rsleep
 
 
 FISHING_INV_FULL = cv2.imread("pics/you_cant_carry_more_fish.png", cv2.IMREAD_COLOR)
@@ -71,6 +71,28 @@ def auto_cast_superglass(bank_rect, withdraw1_rect, withdraw2_rect, cast_spell_r
     rsleep(1.95, factor=0.05)
 
 
+def auto_cast_plankmake(bank_rect, withdraw1_rect, cast_spell_rect):
+    # Open the bank
+    x, y = random_point_near_center_of_rect(*bank_rect)
+    wait_for_bank(click_coor=(x, y))
+    rsleep(0.25, factor=0.05)
+    # Deposit All
+    wait_for_deposit_all(click_coor=(x, y), img_filename="empty_inventory_top_half.png")
+    # Withdraw planks
+    x, y = random_point_near_center_of_rect(*withdraw1_rect)
+    click(x, y)
+    rsleep(0.25)
+    # Esc bank
+    press_key("esc")
+    # Click Plank Make
+    x, y = random_point_near_center_of_rect(*cast_spell_rect)
+    click(x, y)
+    rsleep(0.25)
+    click(x, y)
+    # Full inventory take ~90 seconds, so this range is 90-110
+    rsleep(100, factor=0.1)
+
+
 def smith_platebodies_varrock(bank_booth_color, deposit_all, withdraw, anvil, platebody, start=0, lag_factor=1):
     def bank():
         closest_spot_rect = get_closest_rectangle_to_center(color=bank_booth_color)
@@ -117,19 +139,19 @@ def smith_platebodies_varrock(bank_booth_color, deposit_all, withdraw, anvil, pl
 
 
 def clean_herbs(bank_rect, withdraw1_rect):
-    x, y = random_point_near_center_of_rect(*bank_rect)
-    wait_for_bank(click_coor=(x, y))
-    rsleep(0.25, factor=0.05)
-    # Deposit All
-    wait_for_deposit_all(click_coor=(x, y))
-    rsleep(0.25)
-    # Withdraw <saved>
-    click_in_rect(*withdraw1_rect)
-    rsleep(0.25)
-    # Esc bank
-    press_key("esc")
-    rsleep(0.25)
-    drop_all(CLEAN_CLICK_ORDER, time_to_move=(0.11, 0.01))
+    # x, y = random_point_near_center_of_rect(*bank_rect)
+    # wait_for_bank(click_coor=(x, y))
+    # rsleep(0.25, factor=0.05)
+    # # Deposit All
+    # wait_for_deposit_all(click_coor=(x, y))
+    # rsleep(0.25)
+    # # Withdraw <saved>
+    # click_in_rect(*withdraw1_rect)
+    # rsleep(0.25)
+    # # Esc bank
+    # press_key("esc")
+    # rsleep(0.25)
+    drop_all(CLEAN_CLICK_ORDER, time_to_move=(0.10, 0.005))
 
 
 class Fishing:
