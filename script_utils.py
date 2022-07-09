@@ -18,6 +18,7 @@ def get_screenshot(monitor=MONITOR):
 
 
 def get_screenshot_bgr(monitor=MONITOR):
+    """Takes from 0.075 to 0.1 seconds"""
     screenshot = get_screenshot(monitor)
     return cv2.cvtColor(screenshot, cv2.COLOR_BGRA2BGR)
 
@@ -172,7 +173,12 @@ def debug_points_on_screen(screenshot, points: list, width=5):
         debug_point(screenshot, point[0], point[1], width)
 
 
-def get_image_on_screen(screenshot, image, threshold=0.85):
+def get_image_on_screen(screenshot, image, threshold=0.85, image_name="", debug=False):
+    """Can be sped up if screenshot is relatively small compared to image.
+    Basically matchTemplate works by sliding 'image' all across 'screenshot' until there's a match.
+
+    See: https://stackoverflow.com/questions/44218626/increase-performance-of-template-matching-in-opencv
+    """
     result = cv2.matchTemplate(screenshot, image, cv2.TM_CCOEFF_NORMED)
     w, h = image.shape[:2]
     matching_points = numpy.where(result >= threshold)
@@ -181,61 +187,69 @@ def get_image_on_screen(screenshot, image, threshold=0.85):
     try:
         top_left = list(all_matches)[0]
     except IndexError:
-        print("Couldn't find inventory")
+        if debug:
+            print(f"Couldn't find image {image_name}")
         return None, None
     bottom_right = (top_left[0] + w, top_left[1] + h)
     return top_left, bottom_right
 
 
-def display_debug_screenshot(screenshot, top, left, refresh_rate_ms=1000):
+def display_debug_screenshot(screenshot, top, left, refresh_rate_ms=1000, name="Debug"):
     """
     params:
         refresh_rate_ms: milliseconds to wait between refresh
     """
-    # Unsure why this is sometimes not needed. :shrug:
-    # resized = cv2.resize(screenshot, (monitor["width"], monitor["height"]))
-    name = "Debug"
-    cv2.namedWindow(name)
+    cv2.namedWindow(name, cv2.WINDOW_NORMAL)
     # Move to x, y
     cv2.moveWindow(name, left, top)
     cv2.imshow(name, screenshot)
+    # cv2.resizeWindow(name, 250, 250)
     # Show on top of other windows.
     cv2.setWindowProperty(name, cv2.WND_PROP_TOPMOST, 1)
     cv2.waitKey(delay=int(refresh_rate_ms))
 
 
-def get_inventory_corner_points(screenshot):
+def get_inventory_corner_points(screenshot, debug=False):
+    """Takes about 1 full second due to 4x matchTemplate within get_image_on_screen"""
     # Top Left of Inventory
     try:
         top_left_im = cv2.imread("pics/inventory_top_left.png", cv2.IMREAD_COLOR)
-        top_left_invent_point, _ = get_image_on_screen(screenshot, top_left_im)
+        top_left_invent_point, _ = get_image_on_screen(
+            screenshot, top_left_im, image_name="inventory_top_left", debug=debug
+        )
     except Exception as e:
-        print("Couldn't find top_left corner", e)
+        if debug:
+            print("Couldn't find top_left corner", e)
         top_left_invent_point = None
     # Top Right of Inventory
     try:
         top_right_im = cv2.imread("pics/inventory_top_right.png", cv2.IMREAD_COLOR)
         w, _ = top_right_im.shape[:2]
-        top_left, _ = get_image_on_screen(screenshot, top_right_im)
+        top_left, _ = get_image_on_screen(screenshot, top_right_im, image_name="inventory_top_right", debug=debug)
         top_right_invent_point = (top_left[0] + w, top_left[1])
     except Exception as e:
-        print("Couldn't find top_right corner", e)
+        if debug:
+            print("Couldn't find top_right corner", e)
         top_right_invent_point = None
     # Bottom Left of Inventory
     try:
         bottom_left_im = cv2.imread("pics/inventory_bottom_left.png", cv2.IMREAD_COLOR)
         _, h = bottom_left_im.shape[:2]
-        top_left, _ = get_image_on_screen(screenshot, bottom_left_im)
+        top_left, _ = get_image_on_screen(screenshot, bottom_left_im, image_name="inventory_bottom_left", debug=debug)
         bottom_left_invent_point = (top_left[0], top_left[1] + h)
     except Exception as e:
-        print("Couldn't find bottom_left corner", e)
+        if debug:
+            print("Couldn't find bottom_left corner", e)
         bottom_left_invent_point = None
     # Bottom Right of Inventory
     try:
         bottom_right_im = cv2.imread("pics/inventory_bottom_right.png", cv2.IMREAD_COLOR)
-        _, bottom_right_invent_point = get_image_on_screen(screenshot, bottom_right_im)
+        _, bottom_right_invent_point = get_image_on_screen(
+            screenshot, bottom_right_im, image_name="inventory_bottom_right", debug=debug
+        )
     except Exception as e:
-        print("Couldn't find bottom_right corner", e)
+        if debug:
+            print("Couldn't find bottom_right corner", e)
         bottom_right_invent_point = None
     return top_left_invent_point, top_right_invent_point, bottom_left_invent_point, bottom_right_invent_point
 
