@@ -13,6 +13,10 @@ def random_around(num, factor):
     end = num + (num * factor)
     return random.triangular(start, end)
 
+def random_near_point(x, y, factor):
+    x = random_around(x, factor)
+    y = random_around(y, factor)
+    return x, y
 
 def random_point_near_center_of_rect(top_left, bottom_right, absolute=False):
     """
