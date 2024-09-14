@@ -16,6 +16,7 @@ if __name__ == "__main__":
 
     from script_classes.nmz import NMZ
     from script_classes.slayer import Slayer
+    from script_classes.prif_smithing import PrifSmithing
 
     args = parse_args()
 

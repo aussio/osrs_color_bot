@@ -22,6 +22,30 @@ def get_screenshot_bgr(monitor=MONITOR):
     screenshot = get_screenshot(monitor)
     return cv2.cvtColor(screenshot, cv2.COLOR_BGRA2BGR)
 
+# Get a list of lines of text from the chatbox.
+# Splits each line into an array of [timestamp, text]
+# Fills in empty timestamp or text if unable to read it properly
+# 
+# for timestamp, text in chatbox:
+#     print(timestamp, text)
+def get_chatbox_text(monitor=MONITOR):
+    color_screenshot = get_screenshot_bgr(monitor)
+    text_lines = pytesseract.image_to_string(color_screenshot).split("\n")
+    text_lines = [line for line in text_lines if line != '']
+    # print(text_lines)
+    output = []
+    for line in text_lines:
+        split_line = line.split("] ")
+        output_line = []
+        if len(split_line) == 1:
+            output_line.append("")
+            output_line.append(split_line[0])
+        else:
+            output_line.append(split_line[0])
+            output_line.append(split_line[1])
+        output.append(output_line)
+    return output
+
 
 def is_image_on_screen(image, threshold=0.80):
     # Get the current screen
@@ -194,7 +218,7 @@ def get_image_on_screen(screenshot, image, threshold=0.85, image_name="", debug=
     return top_left, bottom_right
 
 
-def display_debug_screenshot(screenshot, top, left, refresh_rate_ms=1000, name="Debug"):
+def display_debug_screenshot(screenshot, top, left, refresh_rate_ms=1000, name="Debug", size=(500, 500)):
     """
     params:
         refresh_rate_ms: milliseconds to wait between refresh
@@ -203,7 +227,7 @@ def display_debug_screenshot(screenshot, top, left, refresh_rate_ms=1000, name="
     # Move to x, y
     cv2.moveWindow(name, left, top)
     cv2.imshow(name, screenshot)
-    # cv2.resizeWindow(name, 250, 250)
+    cv2.resizeWindow(name, size[0], size[1])
     # Show on top of other windows.
     cv2.setWindowProperty(name, cv2.WND_PROP_TOPMOST, 1)
     cv2.waitKey(delay=int(refresh_rate_ms))

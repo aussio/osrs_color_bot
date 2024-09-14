@@ -2,26 +2,28 @@
 # python3.10 -i http_plugin/inventory.py
 
 import requests
-import item_ids
+import http_plugin.item_ids as item_ids
 
 class Inventory:
     def __init__(self):
+        # Sets self.i
         self.reload()
 
     def is_empty(self):
         self.reload()
-        ids = map(lambda s: s['id'], inv.i)
+        ids = map(lambda s: s['id'], self.i)
         empties = map(lambda id: id == -1, ids)
         return all(empties)
 
     def is_full(self):
         self.reload()
-        ids = map(lambda s: s['id'], inv.i)
+        ids = map(lambda s: s['id'], self.i)
         not_empties = map(lambda id: id != -1, ids)
         return all(not_empties)
 
     # Returns (slot_index, quantity) for first slot with `item`
     def has_item(self, item_id):
+        self.reload()
         for index, slot in enumerate(self.i):
             if slot['id'] == item_id:
                 return index, slot['quantity']

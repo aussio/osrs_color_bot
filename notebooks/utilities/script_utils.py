@@ -79,38 +79,6 @@ def get_closest_rectangle_to_center(color, image=None):
     return closest_rect
 
 
-def wait_for_bank(click_coor=None):
-    """click_while_waiting expects an (x,y) to click within"""
-    inside_bank = False
-    while not inside_bank:
-        if click_coor:
-            click(click_coor[0], click_coor[1])
-            rsleep(0.25)
-        frame = get_screenshot()
-        bank_amount_mask = get_mask(frame, BANK_TEXT_COLOR)
-        inside_bank = numpy.any(bank_amount_mask)
-        if not click_coor:
-            time.sleep(0.1)  # Benkmarked at .033 without
-
-
-def wait_for_deposit_all(click_coor, img_filename="empty_inventory.png"):
-    empty_inventory_pic = cv2.imread(f"pics/{img_filename}", cv2.IMREAD_COLOR)
-    start = time.time()
-    empty_inventory = False
-    click(*click_coor)
-    while not empty_inventory:
-        if time.time() - start >= 1.5:
-            click(*click_coor)
-        empty_inventory = is_image_on_screen(empty_inventory_pic)
-        # time.sleep(0.1)  # Benkmarked at ~0.18 without
-
-
-def reset_xp_tracker():
-    click(825, 325)
-    click(825, 325, button="right")
-    click(840, 362)
-
-
 def drop_all(slots_to_click, time_to_move=(0.12, 0.03)):
     """left click only at the moment"""
     for slot_index in slots_to_click:
@@ -209,13 +177,13 @@ def display_debug_screenshot(screenshot, top, left, refresh_rate_ms=1000, name="
     cv2.waitKey(delay=int(refresh_rate_ms))
 
 
-def get_inventory_corner_points(screenshot, debug=False):
+def get_inventory_corner_points(screenshot, threshold=0.85, debug=False):
     """Takes about 1 full second due to 4x matchTemplate within get_image_on_screen"""
     # Top Left of Inventory
     try:
-        top_left_im = cv2.imread("pics/inventory_top_left.png", cv2.IMREAD_COLOR)
+        top_left_im = cv2.imread("../pics/inventory_top_left.png", cv2.IMREAD_COLOR)
         top_left_invent_point, _ = get_image_on_screen(
-            screenshot, top_left_im, image_name="inventory_top_left", debug=debug
+            screenshot, top_left_im, threshold=threshold, image_name="inventory_top_left", debug=debug
         )
     except Exception as e:
         if debug:
@@ -223,9 +191,9 @@ def get_inventory_corner_points(screenshot, debug=False):
         top_left_invent_point = None
     # Top Right of Inventory
     try:
-        top_right_im = cv2.imread("pics/inventory_top_right.png", cv2.IMREAD_COLOR)
+        top_right_im = cv2.imread("../pics/inventory_top_right.png", cv2.IMREAD_COLOR)
         w, _ = top_right_im.shape[:2]
-        top_left, _ = get_image_on_screen(screenshot, top_right_im, image_name="inventory_top_right", debug=debug)
+        top_left, _ = get_image_on_screen(screenshot, top_right_im, threshold=threshold, image_name="inventory_top_right", debug=debug)
         top_right_invent_point = (top_left[0] + w, top_left[1])
     except Exception as e:
         if debug:
@@ -233,9 +201,9 @@ def get_inventory_corner_points(screenshot, debug=False):
         top_right_invent_point = None
     # Bottom Left of Inventory
     try:
-        bottom_left_im = cv2.imread("pics/inventory_bottom_left.png", cv2.IMREAD_COLOR)
+        bottom_left_im = cv2.imread("../pics/inventory_bottom_left.png", cv2.IMREAD_COLOR)
         _, h = bottom_left_im.shape[:2]
-        top_left, _ = get_image_on_screen(screenshot, bottom_left_im, image_name="inventory_bottom_left", debug=debug)
+        top_left, _ = get_image_on_screen(screenshot, bottom_left_im, threshold=threshold, image_name="inventory_bottom_left", debug=debug)
         bottom_left_invent_point = (top_left[0], top_left[1] + h)
     except Exception as e:
         if debug:
@@ -243,9 +211,9 @@ def get_inventory_corner_points(screenshot, debug=False):
         bottom_left_invent_point = None
     # Bottom Right of Inventory
     try:
-        bottom_right_im = cv2.imread("pics/inventory_bottom_right.png", cv2.IMREAD_COLOR)
+        bottom_right_im = cv2.imread("../pics/inventory_bottom_right.png", cv2.IMREAD_COLOR)
         _, bottom_right_invent_point = get_image_on_screen(
-            screenshot, bottom_right_im, image_name="inventory_bottom_right", debug=debug
+            screenshot, bottom_right_im, threshold=threshold, image_name="inventory_bottom_right", debug=debug
         )
     except Exception as e:
         if debug:
@@ -303,22 +271,3 @@ def calculate_inventory_slots(top_left, top_right, bottom_left, bottom_right):
             inventory_points.append((x, y))
 
     return inventory_points
-
-
-def get_osrs_windows():
-    from Quartz import (
-        CGWindowListCopyWindowInfo,
-        kCGWindowListOptionOnScreenOnly,
-        kCGNullWindowID,
-    )
-
-    options = kCGWindowListOptionOnScreenOnly
-    windowList = CGWindowListCopyWindowInfo(options, kCGNullWindowID)
-
-    osrs_windows = []
-    for window in windowList:
-        title = window.get("kCGWindowOwnerName")
-        if str(title.lower()) == "runelite":
-            osrs_windows.append(window.get("kCGWindowBounds"))
-
-    return osrs_windows

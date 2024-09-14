@@ -6,8 +6,7 @@ For now, this is essentially just a "constants" file.
 from colors import SOLID_GREEN
 
 
-# MONITOR = {"top": 284, "left": 0, "width": 770, "height": 500}
-MONITOR = {"top": 0, "left": 0, "width": 1120, "height": 1059}
+MONITOR = {"top": 284, "left": 0, "width": 770, "height": 500}
 BOTTOM_LEFT_WINDOW = {"top": 540, "left": 0, "width": 770, "height": 505}
 FISHING_STATUS = {"top": 300, "left": 0, "width": 140, "height": 80}
 # This is intended to be where the player currently is, since they are usually
