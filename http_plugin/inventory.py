@@ -19,7 +19,8 @@ class Inventory:
         self.reload()
         ids = map(lambda s: s['id'], self.i)
         not_empties = map(lambda id: id != -1, ids)
-        return all(not_empties)
+        all_not_empty = all(not_empties)
+        return all_not_empty and len(self.i) == 28
 
     # Returns (slot_index, quantity) for first slot with `item`
     def has_item(self, item_id):
@@ -32,6 +33,7 @@ class Inventory:
     # Returns (slot_index, quantity) for first slot with any item in `items`
     # If `ignore` is passed, will not flag those items.
     def has_any_items(self, item_ids, ignore=[]):
+        self.reload()
         if not isinstance(ignore, list):
             ignore = [ignore]
 

@@ -57,9 +57,9 @@ def is_image_on_screen(image, threshold=0.80):
     return max_val > threshold
 
 
-def get_rectangle(mask, color_name):
+def get_rectangle(mask, color_name, only_one=True):
     contours, _ = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    if len(contours) > 1:
+    if only_one and len(contours) > 1:
         print(f"Warning! More than one rect for {color_name}")
         return
     try:

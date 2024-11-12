@@ -24,11 +24,11 @@ class CONFIG:
     DEBUG_SCREENSHOT_SIZE = (500, 500)
     DEBUG_SCREENSHOT_LOCATION = {"top": 0, "left": MONITOR_SIZE["width"] - DEBUG_SCREENSHOT_SIZE[0]}
 
-MITH_BAR = cv2.imread("pics/mith_bar_bank.png", cv2.IMREAD_COLOR)
+ADDY_BAR = cv2.imread("pics/addy_bar_bank.png", cv2.IMREAD_COLOR)
 ANVIL = cv2.imread("pics/anvil_prif.png", cv2.IMREAD_COLOR)
 ANVIL_VERTICAL = cv2.imread("pics/anvil_prif_vertical.png", cv2.IMREAD_COLOR)
-PLATEBODY_INV = cv2.imread("pics/mith_platebody_inv.png", cv2.IMREAD_COLOR)
-PLATEBODY_MENU = cv2.imread("pics/mith_platebody_menu.png", cv2.IMREAD_COLOR)
+PLATEBODY_INV = cv2.imread("pics/addy_platebody_inv.png", cv2.IMREAD_COLOR)
+PLATEBODY_MENU = cv2.imread("pics/addy_platebody_menu.png", cv2.IMREAD_COLOR)
 PRIF_BANK = cv2.imread("pics/prif_bank.png", cv2.IMREAD_COLOR)
 PRIF_BANK_VERTICAL = cv2.imread("pics/prif_bank_vertical.png", cv2.IMREAD_COLOR)
 DEPOSIT_ALL = cv2.imread("pics/deposit_all.png", cv2.IMREAD_COLOR)
@@ -36,7 +36,7 @@ DEPOSIT_ALL = cv2.imread("pics/deposit_all.png", cv2.IMREAD_COLOR)
 WALK_TO_BANK_TIME = 3
 
 # Amount of time to sleep each loop.
-LAG_FACTOR = 0.25
+LAG_FACTOR = 0.5
 
 """
 python3.10 new_main.py --script PrifSmithing -n 1
@@ -48,6 +48,9 @@ look south
 Reset zoom to 300
 bank pin entered, Quantity All
 No weapon equipped
+Full graceful equipped w/ full run energy
+
+~~~ Breaks when a level is gained. ~~~
 """
 @dataclass
 class PrifSmithing(ScriptBase):
@@ -71,11 +74,11 @@ class PrifSmithing(ScriptBase):
         # self.debug_display(self.debug)
         bank_open = self.is_bank_open()
         inv_full = self.inv.is_full()
-        has_bars = self.inv.has_item(item_ids.MITHRIL_BAR)
-        has_platebodies = self.inv.has_item(item_ids.MITHRIL_PLATEBODY)
-
+        has_bars = self.inv.has_item(item_ids.ADAMANTITE_BAR)
+        has_platebodies = self.inv.has_item(item_ids.ADAMANT_PLATEBODY)
         self.check_inventory_changed()
-        if self.inventory_stale_count >= 10:
+
+        if self.inventory_stale():
             print("Inventory stale, exiting")
             press_key("esc")
             # self.try_to_click_cached("pics/logout.png", "LOGOUT")
@@ -84,16 +87,26 @@ class PrifSmithing(ScriptBase):
         # Bank menu open
         # 
         if bank_open:
+            BANK_CLICK_DELAY = 0.15
             if has_platebodies:
                 print("depositing platebodies")
                 clicked = self.try_to_click_cached(PLATEBODY_INV, "PLATEBODY_INV")
-                if clicked:
-                    time.sleep(LAG_FACTOR)
+                rsleep(BANK_CLICK_DELAY)
+                if not clicked: return
+                clicked = self.try_to_click_cached(ADDY_BAR, "ADDY_BAR")
+                rsleep(BANK_CLICK_DELAY)
+                if not clicked: return
+                clicked = self.try_to_click_cached(ANVIL, "ANVIL")
+                if not clicked: return
+                self.wait_for(self.is_smithing_menu_open)
             elif not has_platebodies and not has_bars:
                 print("withdrawing bars")
-                clicked = self.try_to_click_cached(MITH_BAR, "MITH_BAR")
-                if clicked:
-                    time.sleep(LAG_FACTOR)
+                clicked = self.try_to_click_cached(ADDY_BAR, "ADDY_BAR")
+                rsleep(BANK_CLICK_DELAY)
+                if not clicked: return
+                clicked = self.try_to_click_cached(ANVIL, "ANVIL")
+                if not clicked: return
+                self.wait_for(self.is_smithing_menu_open)
             elif not has_platebodies and has_bars:
                 print("clicking anvil")
                 self.try_to_click_cached(ANVIL, "ANVIL")
@@ -112,6 +125,11 @@ class PrifSmithing(ScriptBase):
         # Missed the anvil?
         elif inv_full and has_bars:
             print("clicking anvil vertical")
+            self.try_to_click_cached(ANVIL_VERTICAL, "ANVIL_VERTICAL")
+            self.wait_for(self.is_smithing_menu_open, max_wait=3)
+        # Still smithing - level up
+        elif not inv_full and has_bars and self.inventory_stale(max=2):
+            print("clicking anvil level up")
             self.try_to_click_cached(ANVIL_VERTICAL, "ANVIL_VERTICAL")
             self.wait_for(self.is_smithing_menu_open, max_wait=3)
         # Still smithing
@@ -171,7 +189,7 @@ class PrifSmithing(ScriptBase):
         else:
             screenshot = get_screenshot_bgr(CONFIG.GAME_WINDOW)
         
-        tl, br = get_image_on_screen(screenshot, img)
+        tl, br = get_image_on_screen(screenshot, img, 0.95)
 
         # If found in cache, we need to use region to click
         if tl and cached_coor:
@@ -239,7 +257,7 @@ class PrifSmithing(ScriptBase):
         elapsed = 0
 
         while elapsed <= max_wait:
-            print(f"{func.__name__}? {elapsed}")
+            # print(f"{func.__name__}? {elapsed}")
             if func(*args):
                 return True
             elapsed = time.time() - start
@@ -252,3 +270,7 @@ class PrifSmithing(ScriptBase):
         else:
             self.inventory_stale_count = 0
         self.previous_inventory = self.inv.i
+        print(self.inventory_stale_count)
+
+    def inventory_stale(self, max=10):
+        return self.inventory_stale_count > max
