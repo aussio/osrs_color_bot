@@ -1,13 +1,16 @@
 import os
 from dataclasses import dataclass
+import cv2
 import numpy
 import pyautogui
 
 from script_random import rsleep
 from script_utils import (
     display_debug_screenshot,
+    get_image_on_screen,
     get_screenshot,
     get_rectangle,
+    get_screenshot_bgr,
 )
 from colors import get_mask
 
@@ -31,6 +34,10 @@ RED = numpy.array([255, 0, 0])
 YELLOW = numpy.array([255, 255, 0])
 CYAN = numpy.array([0, 255, 255])
 MAGENTA = numpy.array([255, 0, 255])
+MARK_OF_GRACE = cv2.imread("pics/mark_of_grace.png", cv2.IMREAD_COLOR)
+FALL_ICON = cv2.imread("pics/frem_agility_fall.png", cv2.IMREAD_COLOR)
+RECOVER_ICON = cv2.imread("pics/frem_agility_recover.png", cv2.IMREAD_COLOR)
+RECOVER_ICON_2 = cv2.imread("pics/frem_agility_recover_2.png", cv2.IMREAD_COLOR)
 
 # Amount of time to sleep each loop.
 LAG_FACTOR = 0
@@ -44,9 +51,13 @@ Entity Hider
 Line of Sight off
 Stretch mode 30%
 width 1400
+high alch open
+ - ~180 alchs/hour
 
 Agility off
 Metronome off
+chat closed
+jewelry off
 
 height excludes chat tabs
 """
@@ -67,31 +78,46 @@ class Agility(ScriptBase):
     def on_loop(self):
         # self.debug = copy(self.client)
         # self.debug_display(self.debug)
-        self.high_alch()
-        rsleep(3, 0.1)
+        self.click_color(MAGENTA)
+        rsleep(6, 0.1)
 
-        # self.click_color(MAGENTA)
-        # rsleep(5.5, 0)
-        # self.click_color(YELLOW)
-        # rsleep(5, 0)
-        # self.click_color(CYAN)
-        # rsleep(7, 0)
-        # self.click_color(MAGENTA)
-        # rsleep(9.5, 0)
-        # self.click_color(RED)
-        # rsleep(4, 0)
-        # # self.click_color(YELLOW)
-        # rsleep(9, 0)
-        # self.click_color(MAGENTA)
-        # rsleep(5, 0)
-        # self.click_color(RED)
-        # rsleep(7, 0)
-        # alch x2
-        pass
+        self.mark_of_grace()
+
+        self.click_color(YELLOW)
+        rsleep(5.5, 0.05)
+        self.click_color(CYAN)
+        rsleep(0.05)
+        self.high_alch()
+        rsleep(0.5)
+        self.click_color(CYAN)
+        rsleep(7, 0.05)
+
+        # If we fell, this takes us to the start.
+        if self.check_fall():
+            return
+
+        self.mark_of_grace()
+
+        self.click_color(MAGENTA)
+        rsleep(11, 0.05)
+
+        self.mark_of_grace()
+        
+        self.click_color(RED)
+        rsleep(5, 0.05)
+        self.click_color(YELLOW)
+        rsleep(10, 0.05)
+        self.click_color(MAGENTA)
+        rsleep(5, 0.05)
+        self.click_color(RED)
+        rsleep(0.5)
+        self.high_alch()
+        rsleep(3, 0)
+        self.high_alch()
+        rsleep(2.5, 0)
         
     def on_sleep(self):
         rsleep(LAG_FACTOR)
-
 
     def click_color(self, color):
         self.log(f"clicking {color}")
@@ -112,11 +138,25 @@ class Agility(ScriptBase):
         rsleep(0.1)
         slow_click(x, y)
 
-    # Not actually empty, but only hammer and knife
-    def inventory_empty(self):
-        has_roots = self.inv.has_item(item_ids.BRUMA_ROOT)
-        has_kindling = self.inv.has_item(item_ids.BRUMA_KINDLING)
-        return not has_roots and not has_kindling
+    def mark_of_grace(self):
+        clicked = self.try_to_click(MARK_OF_GRACE, threshold=0.75)
+        if clicked: rsleep(2)
+
+    def check_fall(self):
+        screenshot = get_screenshot_bgr(CONFIG.GAME_WINDOW)
+        tl, br = get_image_on_screen(screenshot, FALL_ICON, 0.75)
+        if tl:
+            tl, br = get_image_on_screen(screenshot, RECOVER_ICON, 0.75)
+            slow_click_in_rect(tl, br)
+            self.high_alch()
+            rsleep(5)
+            tl, br = get_image_on_screen(screenshot, RECOVER_ICON_2, 0.75)
+            slow_click_in_rect(tl, br)
+            self.high_alch()
+            rsleep(5)
+            return True
+        else:
+            return False
 
     def get_color_rect(self, image, color):
         mask = get_mask(image, color)
@@ -139,6 +179,16 @@ class Agility(ScriptBase):
             name=name,
             size=CONFIG.DEBUG_SCREENSHOT_SIZE,
         )
+
+    def try_to_click(self, img, threshold=0.85):
+        screenshot = get_screenshot_bgr(CONFIG.GAME_WINDOW)
+        tl, br = get_image_on_screen(screenshot, img, threshold)
+        if tl:
+            slow_click_in_rect(tl, br)
+            return True
+        else:
+            print(f"couldn't find image")
+            return False
 
     def alert(self):
         os.system('afplay /System/Library/Sounds/Sosumi.aiff')

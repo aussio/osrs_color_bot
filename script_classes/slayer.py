@@ -31,7 +31,7 @@ SHARK = cv2.imread("pics/shark.png", cv2.IMREAD_COLOR)
 PRAYER_POTION = cv2.imread("pics/prayer_potion.png", cv2.IMREAD_COLOR)
 
 # Amount of time to sleep each loop.
-LAG_FACTOR = 15
+LAG_FACTOR = 35
 EAT_THRESHOLD = 60
 PRAYER_THRESHOLD = 40
 
