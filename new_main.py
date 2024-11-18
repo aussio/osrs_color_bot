@@ -19,6 +19,7 @@ if __name__ == "__main__":
     from script_classes.prif_smithing import PrifSmithing
     from script_classes.wintertodt import Wintertodt
     from script_classes.agility import Agility
+    from script_classes.shooting_stars import ShootingStars
 
     args = parse_args()
 
