@@ -1,87 +1,95 @@
+import os
+import cv2
 from dataclasses import dataclass
-from copy import copy
+import pytesseract
 
-import numpy
-from script_classes.timer import timer
-from script_classes.tesseract import img_to_str_bw_processing
-from script_random import rsleep
+from script_random import rsleep, random_around
 from script_utils import (
-    debug_points_on_screen,
     display_debug_screenshot,
-    get_inventory_corner_points,
     get_screenshot_bgr,
+    get_image_on_screen,
 )
+
+from auto_gui import slow_click_in_rect
 from .base import ScriptBase
+import http_plugin.item_ids as item_ids
+from http_plugin.inventory import Inventory
+from http_plugin.stats import Stats
 
-# Should probably end up being moved into a separate file.
 class CONFIG:
-    MONITOR_SIZE = {"width": 1679, "height": 1049}
-    GAME_WINDOW = {"top": 0, "left": 0, "width": 769, "height": MONITOR_SIZE["height"]}
-    DEBUG_SCREENSHOT_LOCATION = {"top": 0, "left": MONITOR_SIZE["width"] - GAME_WINDOW["width"]}
+    # Size of entire monitor
+    MONITOR_SIZE = {"width": 1727, "height": 1116}
+    # Size of game window
+    # Includes title bar because it makes clicking more straight forward.
+    GAME_WINDOW = {"top": 0, "left": 0, "width": 1120, "height": 1059}
+    CHAT_WINDOW = {"top": 836, "left": 8, "width": 690, "height": 159}
+    DEBUG_SCREENSHOT_SIZE = (500, 500)
+    DEBUG_SCREENSHOT_LOCATION = {"top": 0, "left": MONITOR_SIZE["width"] - DEBUG_SCREENSHOT_SIZE[0]}
 
+CANNON = cv2.imread("pics/cannon-center-300.png", cv2.IMREAD_COLOR)
+SHARK = cv2.imread("pics/shark.png", cv2.IMREAD_COLOR)
+PRAYER_POTION = cv2.imread("pics/prayer_potion.png", cv2.IMREAD_COLOR)
 
-class CONSTANTS:
-    WINDOW_TITLE_BAR_HEIGHT = 25
+# Amount of time to sleep each loop.
+LAG_FACTOR = 15
+EAT_THRESHOLD = 60
+PRAYER_THRESHOLD = 40
 
-    class PRIMARY_STATS:
-        """The dimensions for HP, Prayer, and Run
-        All the numbers are * 2 because the screenshot dimensions are double the Mac dimensions for some reason.
-        """
+"""
+python3.10 new_main.py --script PrifSmithing -n 1
 
-        BOX_HEIGHT = 13 * 2
-        BOX_WIDTH = 20 * 2
-        HP_TOP = 89 * 2
-        HP_LEFT = 207 * 2
-        PRAYER_TOP = 123 * 2
-        PRAYER_LEFT = 207 * 2
-        RUN_TOP = 155 * 2
-        RUN_LEFT = 196 * 2
-
-
+look north
+Reset zoom to 300
+Entity Hider
+ - Hide Attacker
+ - Hide NPC 2D
+ - Hide Local Player
+ - Hide Local Player 2D
+Stretched mode off
+"""
 @dataclass
 class Slayer(ScriptBase):
-
-    # Client screenshot (Mat = Matrix)
-    client: numpy.ndarray = None
-    # Debug screenshot
-    debug: numpy.ndarray = None
-    # Stats
-    hp: int = 0
-    prayer: int = 0
-    run_energy: int = 0
-    # Slices used for partial screenshot matching
-    # Also where prayer, spellbook, etc show.
-    inventory_slices: tuple[slice] = None
-    hp_slices: tuple[slice] = None
-    prayer_slices: tuple[slice] = None
-    run_slices: tuple[slice] = None
-
     sleep_seconds: int = 0.1
 
     def on_start(self):
         print("Starting...")
-        self.client = get_screenshot_bgr(CONFIG.GAME_WINDOW)
-        self.debug = copy(self.client)
-        self.set_inventory_slice()
-        self.set_primary_stats_slices()
+        self.inv = Inventory()
+        self.stats = Stats()
+        self.click_cache_coor = {}
+        self.menu_region = CONFIG.GAME_WINDOW
+
+        self.previous_inventory = None
+        self.inventory_stale_count = 0
 
     def on_stop(self):
         print("Stopping...")
 
     def on_loop(self):
-        """
-        print(f"Loop count: {self.loop_count}")
-        if self.inventory_slices:
-            inv = self.debug[self.inventory_slices[0], self.inventory_slices[1]]
-            self.debug_display(inv, name="inventory")
-        """
-        self.client = get_screenshot_bgr(CONFIG.GAME_WINDOW)
-        self.debug = copy(self.client)
-        self.set_primary_stats()
-        print(f"HP: {self.hp} Prayer: {self.prayer} Run: {self.run_energy}")
+        # self.debug = copy(self.client)
+        # self.debug_display(self.debug)
+        
+        is_cannon_low = True
+
+    
+        # Bank menu open
+        # 
+        if is_cannon_low:
+            self.click_cannon()
+            rsleep(1)
+
+        if self.is_health_low():
+            self.eat()
+            rsleep(1)
+
+        if self.is_prayer_low():
+            self.sip_potion()
+            rsleep(1)
+
+        rsleep(LAG_FACTOR)
+
 
     def on_sleep(self):
-        rsleep(self.sleep_seconds)
+        pass
 
     def debug_display(self, img, name="Debug"):
         display_debug_screenshot(
@@ -90,54 +98,100 @@ class Slayer(ScriptBase):
             CONFIG.DEBUG_SCREENSHOT_LOCATION["left"],
             refresh_rate_ms=self.sleep_seconds * 900,
             name=name,
+            size=CONFIG.DEBUG_SCREENSHOT_SIZE,
         )
 
-    def set_inventory_slice(self):
-        """Sets self.inventory_slices by finding corner points on screen."""
-        tl, tr, bl, br = get_inventory_corner_points(self.client)
-        if all([tl, tr, bl, br]):
-            # full_image[yi:yf,xi:xf]
-            self.inventory_slices = (slice(tl[1], bl[1]), slice(tl[0], tr[0]))
+    def try_to_click(self, img, threshold=0.85):
+        screenshot = get_screenshot_bgr(CONFIG.GAME_WINDOW)
+        tl, br = get_image_on_screen(screenshot, img, threshold)
+        if tl:
+            slow_click_in_rect(tl, br)
+            return True
         else:
-            print("WARNING: Could not find inventory!")
+            print(f"couldn't find image")
+            return False
 
-    def set_primary_stats_slices(self):
-        """Sets self.hp_slice, self.prayer_slice, and self.run_slice.
+    def region_from_cooridinates(self,  cooridinates):
+        tl, br = cooridinates
+        left, top = tl
+        right, bottom = br
+        width = (bottom - top) + 40
+        height = (right - left) + 40
+        region = {"top": (top - 20) / 2,
+                            "left": (left - 20) / 2,
+                            "width": width / 2,
+                            "height": height / 2}
+        # print(f"cached region: {region}")
+        return region
+        
+    def click_cannon(self):
+        self.try_to_click(CANNON, 0.6)
 
-        Finds them relative to the logout button on screen.
+    def is_health_low(self):
+        current, max = self.stats.hp()
+        is_low = current <= random_around(EAT_THRESHOLD, 0.25)
+        if is_low:
+            print(f"HP low {current}. Eating.")
+            return True
+        else:
+            return False
 
-        All the numbers are * 2 because the screenshot dimensions are double the Mac dimensions for some reason.
-        """
-        BOX_HEIGHT = CONSTANTS.PRIMARY_STATS.BOX_HEIGHT
-        BOX_WIDTH = CONSTANTS.PRIMARY_STATS.BOX_WIDTH
-        CLIENT_WIDTH = CONFIG.GAME_WINDOW["width"] * 2
+    def eat(self):
+        if self.inv.has_item(item_ids.SHARK):
+            self.try_to_click(SHARK, 0.8)
+        else:
+            print("OUT OF FOOD!")
+            self.alert()
+    
+    def is_prayer_low(self):
+        current, max = self.stats.prayer()
+        is_low = current <= random_around(PRAYER_THRESHOLD, 0.25)
+        if is_low:
+            print(f"Prayer low {current}/{max}. Sipping potion.")
+            return True
+        else:
+            return False
+    
+    def sip_potion(self):
+        if self.inv.has_any_items([
+            item_ids.PRAYER_POTION1, item_ids.PRAYER_POTION2,
+            item_ids.PRAYER_POTION3, item_ids.PRAYER_POTION4,
+            ]):
+            self.try_to_click(PRAYER_POTION, 0.8)
+        else:
+            print("OUT OF PRAYER POTS!")
+            self.alert()
 
-        hp_left = CLIENT_WIDTH - CONSTANTS.PRIMARY_STATS.HP_LEFT
-        hp_top = CONSTANTS.PRIMARY_STATS.HP_TOP
-        self.hp_slices = (slice(hp_top, hp_top + BOX_HEIGHT), slice(hp_left, hp_left + BOX_WIDTH))
+    def alert(self):
+        os.system('afplay /System/Library/Sounds/Sosumi.aiff')
+        os.system('afplay /System/Library/Sounds/Sosumi.aiff')
+        os.system('afplay /System/Library/Sounds/Sosumi.aiff')
 
-        prayer_left = CLIENT_WIDTH - CONSTANTS.PRIMARY_STATS.PRAYER_LEFT
-        prayer_top = CONSTANTS.PRIMARY_STATS.PRAYER_TOP
-        self.prayer_slices = (slice(prayer_top, prayer_top + BOX_HEIGHT), slice(prayer_left, prayer_left + BOX_WIDTH))
+    def get_chatbox_text(self, monitor=CONFIG.CHAT_WINDOW):
+        color_screenshot = get_screenshot_bgr(monitor)
+        text_lines = pytesseract.image_to_string(color_screenshot).split("\n")
+        text_lines = [line for line in text_lines if line != '']
+        # print(text_lines)
+        output = []
+        for line in text_lines:
+            split_line = line.split("] ")
+            output_line = []
+            if len(split_line) == 1:
+                output_line.append("")
+                output_line.append(split_line[0])
+            else:
+                output_line.append(split_line[0])
+                output_line.append(split_line[1])
+            output.append(output_line)
+        return output
+    
+    def check_inventory_changed(self):
+        if self.inv.i == self.previous_inventory:
+            self.inventory_stale_count += 1
+        else:
+            self.inventory_stale_count = 0
+        self.previous_inventory = self.inv.i
+        print(self.inventory_stale_count)
 
-        run_left = CLIENT_WIDTH - CONSTANTS.PRIMARY_STATS.RUN_LEFT
-        run_top = CONSTANTS.PRIMARY_STATS.RUN_TOP
-        self.run_slices = (slice(run_top, run_top + BOX_HEIGHT), slice(run_left, run_left + BOX_WIDTH))
-
-    def set_primary_stats(self):
-        self.set_hp()
-        self.set_prayer()
-        self.set_run_energy()
-
-    def set_hp(self):
-        """Seems to fail on 94"""
-        hp = self.debug[self.hp_slices[0], self.hp_slices[1]]
-        self.hp = img_to_str_bw_processing(hp)
-
-    def set_prayer(self):
-        prayer = self.debug[self.prayer_slices[0], self.prayer_slices[1]]
-        self.prayer = img_to_str_bw_processing(prayer)
-
-    def set_run_energy(self):
-        run_energy = self.debug[self.run_slices[0], self.run_slices[1]]
-        self.run_energy = img_to_str_bw_processing(run_energy)
+    def inventory_stale(self, max=10):
+        return self.inventory_stale_count > max

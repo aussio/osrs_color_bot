@@ -63,3 +63,21 @@ def click_in_rect(top_left, bottom_right, clicks=1, wait_between=0, absolute=Fal
         if num != 0 and wait_between > 0:
             rsleep(wait_between, factor=0.1)
         click(x, y)
+
+def slow_click_in_rect(top_left, bottom_right, clicks=1, wait_between=0, absolute=False, delay=0):
+    """Click in the rectangle, adjusted for screen size difference.
+
+    NOTE: Something is off in random_point_near_center
+    so this only really works well for squares
+
+    Params:
+        absolute: Whether the coordinates are relative to a screenshot MONITOR or absolute to the screen size.
+    """
+    if delay > 0:
+        rsleep(delay)
+
+    x, y = random_point_near_center_of_rect(top_left, bottom_right, absolute=absolute)
+    for num in range(clicks):
+        if num != 0 and wait_between > 0:
+            rsleep(wait_between, factor=0.1)
+        slow_click(x, y)

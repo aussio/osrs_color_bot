@@ -19,7 +19,9 @@ from script_utils import (
     get_screenshot,
     reset_xp_tracker,
 )
-from scripts import auto_craft, Fishing, clean_herbs, smith_platebodies_varrock, auto_cast_plankmake
+from scripts import (
+    auto_craft, Fishing, clean_herbs, smith_platebodies_varrock, auto_cast_plankmake,
+)
 from settings import BOTTOM_LEFT_WINDOW
 
 
