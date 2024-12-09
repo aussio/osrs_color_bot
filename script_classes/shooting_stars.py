@@ -24,7 +24,7 @@ class CONFIG:
     # Size of game window
     # Includes title bar because it makes clicking more straight forward.
     GAME_WINDOW = {"top": 0, "left": 0, "width": 1400, "height": 1025}
-    TOP_LEFT_WINDOW = {"top": 0, "left": 0, "width": 100, "height": 100}
+    TOP_LEFT_WINDOW = {"top": 0, "left": 0, "width": 120, "height": 120}
     # NOT STRETCHED!
     CHAT_WINDOW = {"top": 851, "left": 8, "width": 637, "height": 148}
     DEBUG_SCREENSHOT_SIZE = (500, 500)
@@ -51,6 +51,7 @@ class ShootingStars(ScriptBase):
 
     def on_start(self):
         self.last_log = ""
+        self.clicked = 0
         self.log("Starting Script...")
 
     def on_stop(self):
@@ -73,7 +74,7 @@ class ShootingStars(ScriptBase):
 
     def is_mining(self):
         screenshot = get_screenshot_bgr(CONFIG.TOP_LEFT_WINDOW)
-        tl, br = get_image_on_screen(screenshot, MINING)
+        tl, br = get_image_on_screen(screenshot, MINING, threshold=0.65)
         return tl
 
     def click_color(self, color):
